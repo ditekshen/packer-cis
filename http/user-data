@@ -1,0 +1,313 @@
+#cloud-config
+autoinstall:
+  version: 1
+  updates: security
+  refresh-installer:
+    update: yes
+  apt:
+    disable_components: []
+    fallback: offline-install
+    preserve_sources_list: false
+    geoip: true
+    mirror-selection:
+      primary:
+      - country-mirror
+      - arches: &id001
+        - amd64
+        - i386
+        uri: http://archive.ubuntu.com/ubuntu/
+      - arches: &id002
+        - s390x
+        - arm64
+        - armhf
+        - powerpc
+        - ppc64el
+        - riscv64
+        uri: http://ports.ubuntu.com/ubuntu-ports
+    security:
+    - arches: *id001
+      uri: http://security.ubuntu.com/ubuntu/
+    - arches: *id002
+      uri: http://ports.ubuntu.com/ubuntu-ports
+  codecs:
+    install: false
+  drivers:
+    install: false
+  early-commands:
+    - systemctl stop ssh
+  identity:
+    hostname: vagrant
+    password: $6$udE88gaLgjnSkeKV$QKH2yPpPHQ/jsZcTGREHEkW6E07veZMzKJrNzEn54SNp99Acs4FXmpjEMbNph9WbRakIp.br1zRF6uP7wuhyI.
+    realname: vagrant
+    username: vagrant
+  kernel:
+    package: linux-generic
+  keyboard:
+    layout: us
+    toggle: null
+    variant: ''
+  locale: en_US.UTF-8
+  timezone: UTC
+  oem:
+    install: auto
+  source:
+    id: ubuntu-server-minimal
+    search_drivers: false
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys: []
+  packages:
+    - openssh-server
+  storage:
+    swap:
+      size: 2G
+    config:
+    - type: disk
+      id: disk-sda
+      ptable: gpt
+      path: /dev/sda
+      wipe: superblock-recursive
+      preserve: false
+      name: ''
+      grub_device: false
+    # BEGIN EFI ############################
+    - type: partition
+      id: partition-0
+      device: disk-sda
+      number: 1
+      size: 512M
+      wipe: superblock
+      flag: boot
+      preserve: false
+      grub_device: true
+    - type: format
+      id: format-1
+      volume: partition-0
+      fstype: fat32
+    - type: mount
+      id: mount-0
+      device: format-1
+      path: /boot/efi
+      options: "defaults,umask=0077,shortname=winnt,nodev"
+    # END EFI ##############################
+    # BEGIN BOOT ###########################
+    - type: partition
+      id: partition-1
+      device: disk-sda
+      size: 2147483648
+      wipe: superblock
+      number: 2
+      preserve: false
+      grub_device: false
+    - type: format
+      id: format-4
+      volume: partition-1
+      fstype: xfs
+      preserve: false
+    - type: mount
+      id: mount-4
+      device: format-4
+      path: /boot
+    # END BOOT #############################
+    # BEGIN LVM Partition ##################
+    - type: partition
+      id: partition-2
+      device: disk-sda
+      number: 3
+      size: 49336549376
+      wipe: superblock
+      preserve: false
+      grub_device: false
+    # END LVM Partition ####################
+    # BEGIN LVM VG #########################
+    - type: lvm_volgroup
+      id: lvm_volgroup-0
+      name: ubuntu-vg
+      devices:
+      - partition-2
+      preserve: false
+    # END LVM VG ###########################
+    # BEGIN LV root ########################
+    - name: root-lv
+      volgroup: lvm_volgroup-0
+      size: 8589934592B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/root-lv
+      id: lvm_partition-0
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-0
+      preserve: false
+      id: format-0
+      type: format
+    - path: /
+      device: format-0
+      id: mount-3
+      type: mount
+    # END LV root ##########################
+    - name: swap-lv
+      volgroup: lvm_volgroup-0
+      size: 2147483648B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/swap-lv
+      id: lvm_partition-1
+      type: lvm_partition
+    - fstype: swap
+      volume: lvm_partition-1
+      preserve: false
+      id: format-5
+      type: format
+    - path: ''
+      device: format-5
+      id: mount-5
+      type: mount
+    - name: lv-tmp
+      volgroup: lvm_volgroup-0
+      size: 2147483648B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-tmp
+      id: lvm_partition-2
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-2
+      preserve: false
+      id: format-6
+      type: format
+    - path: /tmp
+      device: format-6
+      id: mount-6
+      type: mount
+      options: 'defaults,relatime,nodev,noexec,nosuid'
+    - name: lv-var
+      volgroup: lvm_volgroup-0
+      size: 8589934592B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-var
+      id: lvm_partition-3
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-3
+      preserve: false
+      id: format-7
+      type: format
+    - path: /var
+      device: format-7
+      id: mount-7
+      type: mount
+      options: 'defaults,relatime,nodev,nosuid'
+    - name: lv-var-tmp
+      volgroup: lvm_volgroup-0
+      size: 2147483648B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-var-tmp
+      id: lvm_partition-4
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-4
+      preserve: false
+      id: format-8
+      type: format
+    - path: /var/tmp
+      device: format-8
+      id: mount-8
+      type: mount
+      options: 'defaults,relatime,nodev,noexec,nosuid'
+    - name: lv-var-log
+      volgroup: lvm_volgroup-0
+      size: 4294967296B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-var-log
+      id: lvm_partition-5
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-5
+      preserve: false
+      id: format-9
+      type: format
+    - path: /var/log
+      device: format-9
+      id: mount-9
+      type: mount
+      options: 'defaults,relatime,nodev,noexec,nosuid'
+    - name: lv-var-log-audit
+      volgroup: lvm_volgroup-0
+      size: 4294967296B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-var-log-audit
+      id: lvm_partition-6
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-6
+      preserve: false
+      id: format-10
+      type: format
+    - path: /var/log/audit
+      device: format-10
+      id: mount-10
+      type: mount
+      options: 'defaults,relatime,nodev,noexec,nosuid'
+    - name: lv-home
+      volgroup: lvm_volgroup-0
+      size: 4294967296B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-home
+      id: lvm_partition-7
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-7
+      preserve: false
+      id: format-11
+      type: format
+    - path: /home
+      device: format-11
+      id: mount-11
+      type: mount
+      options: 'defaults,relatime,nodev,nosuid'
+    - name: lv-opt
+      volgroup: lvm_volgroup-0
+      size: 6979321856B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-opt
+      id: lvm_partition-8
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-8
+      preserve: false
+      id: format-12
+      type: format
+    - path: /opt
+      device: format-12
+      id: mount-12
+      type: mount
+    - name: lv-data
+      volgroup: lvm_volgroup-0
+      size: 5846859776B
+      wipe: superblock
+      preserve: false
+      path: /dev/ubuntu-vg/lv-data
+      id: lvm_partition-9
+      type: lvm_partition
+    - fstype: xfs
+      volume: lvm_partition-9
+      preserve: false
+      id: format-13
+      type: format
+    - path: /data
+      device: format-13
+      id: mount-13
+      type: mount
+  late-commands:
+    - sed -i -e 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/g' /target/etc/ssh/sshd_config
+    - echo 'vagrant ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/vagrant
+    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/vagrant
+    - curtin in-target --target=/target -- systemctl enable ssh

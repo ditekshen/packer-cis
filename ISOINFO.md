@@ -10,6 +10,3 @@
 | RockyLinux 9 Minimal | Rocky-9.4-x86_64-minimal.iso         | ```ee3ac97fdffab58652421941599902012179c37535aece76824673105169c4a2``` | ```RedHat9_64```      |
 | Ubuntu 22.04         | ubuntu-22.04.4-live-server-amd64.iso | ```faa97fdcff0ca48a28fdb447308819f8f732be7b13a2f53b7cbd5590cec89a0a``` | ```Ubuntu22_LTS_64``` |
 | Ubuntu 24.04         | ubuntu-24.04-live-server-amd64.iso   | ```8762f7e74e4d64d72fceb5f70682e6b069932deedb4949c6975d0f0fe0a91be3``` | ```Ubuntu22_LTS_64``` |
-
-
-# "RedHat9_64", "Oracle_64", "Oracle9_64", "Ubuntu_64", "Ubuntu22_LTS_64", "Ubuntu23_64", "Debian_64", "Debian12_64"
